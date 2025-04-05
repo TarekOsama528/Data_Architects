@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 # Load dataset
-df = pd.read_csv("C:/Users/osama/OneDrive/Desktop/Data_Architects/Datasets/train.csv")
+df = pd.read_csv("C:/Users/osama/OneDrive/Desktop/Data_Architects/Datasets/Dataset_3.csv")
 
 # Generate descriptive statistics
 desc_stats = df.describe().round(2)
