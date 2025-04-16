@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 # Load dataset
-df = pd.read_csv("C:/Users/osama/OneDrive/Desktop/Data_Architects/Datasets/Dataset_1.csv")
+df = pd.read_csv("Datasets/Dataset_1.csv")
 
 
 # Drop "L7Protocol" column if it exists

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 # Load dataset
-df = pd.read_csv("C:/Users/osama/OneDrive/Desktop/Data_Architects/Datasets/Dataset_2.csv")
+df = pd.read_csv("Datasets/Dataset_2.csv")
 
 
 # Generate descriptive statistics
