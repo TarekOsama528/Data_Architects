@@ -27,7 +27,29 @@ print("=== Two-Way ANOVA Results ===")
 print(anova_table)
 
 # Optional: Plot for visual inspection
-plt.figure(figsize=(10000, 6))
-sns.boxplot(data=df, x='ProtocolName', y='FlowDuration', hue='ProtocolName')
-plt.title('Flow Duration by Protocol')
+# --- Set up figure and style ---
+plt.figure(figsize=(15, 6), dpi=100)
+sns.set(style="whitegrid")
+
+# --- Create boxplot without visible borders ---
+ax = sns.boxplot(data=df, x='ProtocolName', y='FlowDuration', palette='colorblind')
+
+# Optional: Rotate x-labels for readability
+plt.xticks(rotation=45, ha='right')
+
+# --- Remove all axes borders ---
+sns.despine(trim=True, top=True, right=True, left=False, bottom=False)
+for spine in ax.spines.values():
+    spine.set_visible(False)
+
+# --- Adjust layout to fill space ---
+plt.subplots_adjust(left=0.02, right=0.98, top=0.92, bottom=0.25)
+
+# Title
+plt.title('Flow Duration by Protocol', fontsize=16)
+
+# Tight layout to avoid clipping
+plt.tight_layout()
+
+# Show it
 plt.show()
