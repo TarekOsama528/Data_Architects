@@ -7,7 +7,7 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 
 # Load dataset
-df = pd.read_csv('Datasets/Dataset_3.csv', parse_dates=['Timestamp'])
+df = pd.read_csv('../Datasets/Dataset_3.csv', parse_dates=['Timestamp'])
 
 # Check normality
 def test_normality(series):

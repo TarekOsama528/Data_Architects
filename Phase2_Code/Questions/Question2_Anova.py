@@ -3,7 +3,7 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 # Load Dataset 3 (update path accordingly)
-df = pd.read_csv('Datasets/Dataset_3.csv')  # Or use pd.read_csv()
+df = pd.read_csv('../Datasets/Dataset_3.csv')  # Or use pd.read_csv()
 
 # Select relevant columns by index
 # Column 2: SNR, Column 3: Call Duration, Column 8: Call Type
