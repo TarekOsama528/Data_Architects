@@ -7,7 +7,7 @@ print("Script started!")
 
 # Load the CSV file (assuming it's comma-separated)
 try:
-    df = pd.read_csv("train.csv")
+    df = pd.read_csv("Datasets/Dataset_3.csv") 
     print(f"Data loaded successfully. Shape: {df.shape}")
     print(f"First 3 rows:\n{df.head(3)}")
 except FileNotFoundError:
