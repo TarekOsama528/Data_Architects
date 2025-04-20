@@ -1,56 +1,104 @@
 import pandas as pd
-from scipy.stats import pearsonr, ttest_ind, f_oneway
-from datetime import datetime
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy.stats import pearsonr, spearmanr, ttest_ind, f_oneway
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
 
-# Load the dataset
-df = pd.read_csv("Datasets/Dataset_3.csv")
+# Load dataset
+df = pd.read_csv("../Datasets/Dataset_3.csv")
+df.columns = df.columns.str.strip()
 
-# Ensure proper datetime format
-df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-
-# Extract time and date components
+# Parse timestamp and extract hour
+df['Timestamp'] = pd.to_datetime(df['Timestamp'], dayfirst=True, errors='coerce')
 df['Hour'] = df['Timestamp'].dt.hour
-df['Date'] = df['Timestamp'].dt.date
 
-# Drop any rows with missing SNR or Signal Strength
-df = df.dropna(subset=['SNR', 'Signal Strength'])
+# Define TimeGroup (Peak: 17–22, Off-Peak: others)
+df['TimeGroup'] = df['Hour'].apply(lambda x: 'Peak' if 17 <= x <= 22 else 'Off-Peak')
 
-# 1. Pearson Correlation: SNR vs. Signal Strength
-corr, p_corr = pearsonr(df['SNR'], df['Signal Strength'])
-print(f"Pearson Correlation between SNR and Signal Strength: {corr:.2f}, p-value: {p_corr:.4f}")
+# Drop NA rows for relevant analysis
+df_clean = df.dropna(subset=['Signal Strength (dBm)', 'SNR', 'Hour'])
 
-# 2. T-Test between Peak (18-22) and Off-Peak (0-6)
-peak = df[(df['Hour'] >= 18) & (df['Hour'] <= 22)]
-off_peak = df[(df['Hour'] >= 0) & (df['Hour'] <= 6)]
+# ---------------------------------------------
+# 1. Correlation Test + Scatter Plot
+# ---------------------------------------------
+sns.set(style="whitegrid")
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df_clean, x='Signal Strength (dBm)', y='SNR', alpha=0.6)
+sns.regplot(data=df_clean, x='Signal Strength (dBm)', y='SNR', scatter=False, color='red')
+plt.title('Correlation between Signal Strength and SNR')
+plt.tight_layout()
+plt.show()
 
-# T-test for SNR
-t_snr, p_snr = ttest_ind(peak['SNR'], off_peak['SNR'], equal_var=False)
-print(f"T-test for SNR (Peak vs. Off-Peak): t = {t_snr:.2f}, p = {p_snr:.4f}")
+# Correlation Test
+if abs(df_clean['Signal Strength (dBm)'].skew()) < 1 and abs(df_clean['SNR'].skew()) < 1:
+    corr_type = "Pearson"
+    corr_coef, p_val = pearsonr(df_clean['Signal Strength (dBm)'], df_clean['SNR'])
+else:
+    corr_type = "Spearman"
+    corr_coef, p_val = spearmanr(df_clean['Signal Strength (dBm)'], df_clean['SNR'])
 
-# T-test for Signal Strength
-t_sig, p_sig = ttest_ind(peak['Signal Strength'], off_peak['Signal Strength'], equal_var=False)
-print(f"T-test for Signal Strength (Peak vs. Off-Peak): t = {t_sig:.2f}, p = {p_sig:.4f}")
+print(f"\n[Correlation Test] ({corr_type})")
+print(f"Correlation Coefficient: {corr_coef:.3f}, p-value: {p_val:.3f}")
 
-# 3. ANOVA for time intervals (Morning, Afternoon, Evening, Night)
-def get_time_period(hour):
-    if 6 <= hour < 12:
-        return 'Morning'
-    elif 12 <= hour < 18:
-        return 'Afternoon'
-    elif 18 <= hour < 24:
-        return 'Evening'
-    else:
-        return 'Night'
+# ---------------------------------------------
+# 2. Temporal Variation (T-test) + Boxplots
+# ---------------------------------------------
+# T-test: Peak vs Off-Peak
+peak = df_clean[df_clean['TimeGroup'] == 'Peak']
+offpeak = df_clean[df_clean['TimeGroup'] == 'Off-Peak']
 
-df['Time Period'] = df['Hour'].apply(get_time_period)
+t_signal, p_signal = ttest_ind(peak['Signal Strength (dBm)'], offpeak['Signal Strength (dBm)'], equal_var=False)
+t_snr, p_snr = ttest_ind(peak['SNR'], offpeak['SNR'], equal_var=False)
 
-# Group by time period
-groups_snr = [group['SNR'].values for name, group in df.groupby('Time Period')]
-groups_sig = [group['Signal Strength'].values for name, group in df.groupby('Time Period')]
+print("\n[T-Test: Peak vs Off-Peak]")
+print(f"Signal Strength: t = {t_signal:.3f}, p = {p_signal:.3f}")
+print(f"SNR: t = {t_snr:.3f}, p = {p_snr:.3f}")
 
-# ANOVA tests
-f_snr, p_anova_snr = f_oneway(*groups_snr)
-f_sig, p_anova_sig = f_oneway(*groups_sig)
+# Boxplots
+plt.figure(figsize=(12, 5))
 
-print(f"ANOVA for SNR by Time Period: F = {f_snr:.2f}, p = {p_anova_snr:.4f}")
-print(f"ANOVA for Signal Strength by Time Period: F = {f_sig:.2f}, p = {p_anova_sig:.4f}")
+plt.subplot(1, 2, 1)
+sns.boxplot(data=df_clean, x='TimeGroup', y='Signal Strength (dBm)', palette="pastel")
+plt.title('Signal Strength by Time Group')
+
+plt.subplot(1, 2, 2)
+sns.boxplot(data=df_clean, x='TimeGroup', y='SNR', palette="pastel")
+plt.title('SNR by Time Group')
+
+plt.tight_layout()
+plt.show()
+
+# ---------------------------------------------
+# Optional ANOVA on time of day (Morning/Afternoon/Evening)
+# ---------------------------------------------
+df_clean['TimeOfDay'] = pd.cut(df_clean['Hour'], bins=[-1, 11, 17, 23], labels=["Morning", "Afternoon", "Evening"])
+
+anova_groups = [g['Signal Strength (dBm)'].dropna() for _, g in df_clean.groupby('TimeOfDay')]
+f_stat, anova_p = f_oneway(*anova_groups)
+
+print("\n[ANOVA: Signal Strength by Time of Day]")
+print(f"F-statistic = {f_stat:.3f}, p-value = {anova_p:.3f}")
+
+# ---------------------------------------------
+# 3. Regression Analysis + Regression Line
+# ---------------------------------------------
+model = smf.ols("SNR ~ Q('Signal Strength (dBm)') + Hour", data=df_clean).fit()
+
+print("\n[Multiple Linear Regression: SNR ~ Signal Strength + Hour]")
+print(model.summary())
+
+# Plot: Regression Line (SNR vs Signal Strength)
+plt.figure(figsize=(8, 6))
+sns.regplot(data=df_clean, x='Signal Strength (dBm)', y='SNR', line_kws={'color': 'red'})
+plt.title('Regression: SNR vs Signal Strength')
+plt.tight_layout()
+plt.show()
+
+# Optional: Plot residuals
+plt.figure(figsize=(8, 6))
+sns.residplot(data=df_clean, x='Signal Strength (dBm)', y='SNR', lowess=True)
+plt.title("Regression Residuals")
+plt.tight_layout()
+plt.show()
