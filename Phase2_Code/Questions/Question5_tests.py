@@ -7,7 +7,7 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 
 # Load dataset
-df = pd.read_csv('../Datasets/Dataset_3.csv', parse_dates=['Timestamp'])
+df = pd.read_csv('Datasets/Dataset_3.csv', parse_dates=['Timestamp'])
 
 # Check normality
 def test_normality(series):
@@ -31,6 +31,8 @@ else:
 
 print(f"SNR Correlation: {snr_corr:.3f}, p = {snr_p:.3f}")
 print(f"Signal Strength Correlation: {sig_corr:.3f}, p = {sig_p:.3f}")
+
+
 
 # 2. TWO-WAY ANOVA
 # Bin Distance to Tower
@@ -67,3 +69,23 @@ plt.figure(figsize=(9, 6))
 sns.boxplot(data=df, x='DistanceBin', y='Signal Strength (dBm)', hue='Call Type')
 plt.title('Signal Strength by Distance and Call Type')
 plt.show()
+
+# Optional: Visualization without binning distances
+# Continuous plot for SNR vs Distance to Tower
+plt.figure(figsize=(12, 6))  # Wider figure size
+sns.lineplot(data=df, x='Distance to Tower (km)', y='SNR', hue='Call Type', marker='o', palette='Set2')
+plt.title('SNR vs Distance to Tower')
+plt.xlabel('Distance to Tower (km)')
+plt.ylabel('SNR')
+plt.grid(True)
+plt.show()
+
+# Continuous plot for Signal Strength vs Distance to Tower
+plt.figure(figsize=(12, 6))  # Wider figure size
+sns.lineplot(data=df, x='Distance to Tower (km)', y='Signal Strength (dBm)', hue='Call Type', marker='o', palette='Set2')
+plt.title('Signal Strength vs Distance to Tower')
+plt.xlabel('Distance to Tower (km)')
+plt.ylabel('Signal Strength (dBm)')
+plt.grid(True)
+plt.show()
+
